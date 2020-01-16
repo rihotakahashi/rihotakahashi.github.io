@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>日本の伝統色</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+  </head>
+
+  <body>
+  <h2>丸に触れると色が変わるよ</h2>
+  <button id="speak">何色になる？</button>
+  
+<!--日本の伝統色　https://www.rakuten.ne.jp/gold/marutomo/value/color/-->
+  <button type="iro" onclick="location.href='color.html'">日本の伝統色一覧</button>
+  
+  <div>
+    <br><div>あなたのID: <span id="myid"></span></div>
+    <div>ルームID: <span id="room"></span></div>
+    <div>受信した情報はコンソールログで確認してください</div>
+  </div>
+  
+  <script>
+      
+  let msg = new SpeechSynthesisUtterance();
+  let voices = window.speechSynthesis.getVoices();
+
+  function speak(text) {
+    // 以下オプション設定
+    msg.voice = voices[7]; // 7:Google 日本人 ja-JP ※他は英語のみ
+    msg.volume = 1.0; // 音量 min 0 ~ max 1
+    msg.rate = 1.0; // 速度 min 0 ~ max 10
+    msg.pitch = 1.0; // 音程 min 0 ~ max 2
+
+    msg.text = text; // 喋る内容
+    msg.lang = 'ja-JP'; // en-US or ja-JP
+    // msg.lang = 'en-US'; // en-US or ja-JP
+
+    // 発話実行
+    speechSynthesis.speak(msg);
+  }
+  
+  // 終了時の処理
+  msg.onend = function (event) {
+    console.log("End: ",text);
+  }
+  
+  let text = "鶯いろになります";
+
+  let button = document.querySelector("#speak");
+  button.onclick = function () {
+    speak(text);
+  }
+  
+    let room = "s1317135";
+    let socket = io.connect('https://qa.fujimura.com'); 
+      
+    let myid;
+    let speedX = 0;
+    let speedY = 0;
+    
+    document.querySelector("#room").innerHTML = room;
+    socket.on('mylogin', function(data) {
+      myid = data;
+      socket.emit('join', room); // 受信room IDを指定
+      document.querySelector("#myid").innerHTML = myid;
+      console.log("あなたのID: ", myid);
+    });
+            
+    socket.on('sensor', function(data) {
+      console.log(data.g);
+      speedX = 0.05*parseInt(data.g);
+      speedY = 0.05*parseInt(data.b);
+    });
+  
+    let x = 0;
+    let y = 0;
+    let targetX = 0;
+    let targetY = 0;
+    
+    
+    function preload(){
+        cat = loadImage("images/cat.png")
+    }
+    function setup() {
+      createCanvas(640,480);
+      background(200);
+      x = width/2;
+      y = height/2;
+     targetX = random(width);
+     targetY = random(height);
+    
+    }
+  
+    function draw() {
+      background(200);
+      x = x + speedX;
+      y = y + speedY;
+        
+      if(x>width-50) x=width-50;
+      if(x<0) x=0;
+      if(y>height-50) y=height-50;
+      if(y<0) y=0;
+      let distance = Math.sqrt(Math.pow(x-targetX,2)+Math.pow(y-targetY,2));
+      console.log(distance);
+      if(distance < 50) background(131,130,61);
+      ellipse(targetX, targetY, 50, 50);
+      image(cat,x,y,50,50);
+    }
+      
+
+  </script>
+</body>
+</html>
